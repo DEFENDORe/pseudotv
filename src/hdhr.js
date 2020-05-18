@@ -1,11 +1,9 @@
-const express = require('express')
-const SSDP = require('node-ssdp').Server
+import express from 'express';
+import SsdpServer from 'node-ssdp/lib/server.js';
 
-module.exports = hdhr
+export default function hdhr(db) {
 
-function hdhr(db) {
-
-    const server = new SSDP({
+    const server = new SsdpServer({
         location: {
             port: process.env.PORT,
             path: '/device.xml'
@@ -73,7 +71,7 @@ function getDevice(db, host) {
         LineupURL: `${host}/lineup.json`
     }
     device.getXml = () => {
-        str =
+        const str =
             `<root xmlns="urn:schemas-upnp-org:device-1-0">
       <URLBase>${device.BaseURL}</URLBase>
       <specVersion>

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     getCurrentProgramAndTimeElapsed: getCurrentProgramAndTimeElapsed,
     createLineup: createLineup
 }

@@ -1,12 +1,10 @@
-const express = require('express')
-const helperFuncs = require('./helperFuncs')
-const FFMPEG = require('./ffmpeg')
-const FFMPEG_TEXT = require('./ffmpegText')
-const fs = require('fs')
+import express from 'express';
+import * as helperFuncs from './helperFuncs.js';
+import * as FFMPEG from './ffmpeg.js';
+import * as FFMPEG_TEXT from './ffmpegText.js';
+import * as fs from 'fs';
 
-module.exports = { router: video }
-
-function video(db) {
+export default function video(db) {
     var router = express.Router()
 
     router.get('/setup', (req, res) => {

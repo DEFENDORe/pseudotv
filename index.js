@@ -1,15 +1,19 @@
-const db = require('diskdb')
-const fs = require('fs')
-const path = require('path')
-const express = require('express')
-const bodyParser = require('body-parser')
+import db from 'diskdb';
+import * as fs from 'fs';
+import * as path from 'path';
+import express from 'express';
+import bodyParser from 'body-parser';
 
-const api = require('./src/api')
-const video = require('./src/video')
-const HDHR = require('./src/hdhr')
+import api from './src/api.js';
+import video from './src/video.js';
+import HDHR from './src/hdhr.js';
+import driverRouter from './src/routers/driverRouter.js';
 
-const xmltv = require('./src/xmltv')
-const Plex = require('./src/plex')
+import xmltv from './src/xmltv.js';
+import * as Plex from './src/plex.js';
+
+const __dirname = path.resolve(path.dirname(''));
+
 
 for (let i = 0, l = process.argv.length; i < l; i++) {
     if ((process.argv[i] === "-p" || process.argv[i] === "--port") && i + 1 !== l)
@@ -78,9 +82,10 @@ let app = express()
 app.use(bodyParser.json({limit: '50mb'}))
 app.use(express.static(path.join(__dirname, 'web/public')))
 app.use('/images', express.static(path.join(process.env.DATABASE, 'images')))
-app.use(api.router(db, xmltvInterval))
-app.use(video.router(db))
+app.use(api(db, xmltvInterval))
+app.use(video(db))
 app.use(hdhr.router)
+app.use('/driver', driverRouter);
 app.listen(process.env.PORT, () => {
     console.log(`HTTP server running on port: http://*:${process.env.PORT}`)
     let hdhrSettings = db['hdhr-settings'].find()[0]

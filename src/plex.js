@@ -1,5 +1,5 @@
-const request = require('request')
-class Plex {
+import * as request from 'request';
+export class Plex {
     constructor(opts) {
         this._token = typeof opts.token !== 'undefined' ? opts.token : ''
         this._server = {
@@ -139,5 +139,3 @@ class Plex {
                 this.Put(`/media/grabbers/devices/${dvrs[i].Device[y].key}/channelmap`, qs).then(() => { }, (err) => { console.log(err) })
     }
 }
-
-module.exports = Plex

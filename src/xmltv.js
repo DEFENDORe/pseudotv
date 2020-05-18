@@ -1,8 +1,8 @@
-const XMLWriter = require('xml-writer')
-const fs = require('fs')
-const helperFuncs = require('./helperFuncs')
+import XMLWriter from 'xml-writer';
+import * as fs from 'fs';
+import * as helperFuncs from './helperFuncs.js';
 
-module.exports = { WriteXMLTV: WriteXMLTV }
+export default { WriteXMLTV: WriteXMLTV }
 
 function WriteXMLTV(channels, xmlSettings) {
     return new Promise((resolve, reject) => {

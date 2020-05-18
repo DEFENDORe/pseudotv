@@ -1,9 +1,8 @@
 
-const express = require('express')
-const fs = require('fs')
+import express from 'express';
+import * as fs from 'fs';
 
-module.exports = { router: api }
-function api(db, xmltvInterval) {
+export default function api(db, xmltvInterval) {
     let router = express.Router()
 
     // Plex Servers
