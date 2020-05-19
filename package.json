@@ -1,59 +1,64 @@
 {
   "name": "pseudotv",
-  "version": "1.0.0",
-  "description": "Create LiveTV channels from your Plex media",
-  "main": "index.js",
+  "version": "0.0.6",
+  "description": "Create live TV streams from own media.",
+  "main": "server/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "build": "browserify ./web/app.js -o ./web/public/bundle.js",
-    "dev-client": "watchify ./web/app.js -o ./web/public/bundle.js",
-    "dev-server": "nodemon index.js --ignore ./web/ --ignore ./db/ --ignore ./xmltv.xml",
-    "compile": "babel index.js -d dist && babel src -d dist/src",
-    "package": "copyfiles ./web/public/**/* ./dist && copyfiles ./resources/**/* ./dist && pkg . --out-path bin",
-    "clean": "del-cli --force ./bin ./dist ./.pseudotv ./web/public/bundle.js"
+    "serve": "nodemon --exec vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "start": "node ./server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DEFENDORe/pseudotv.git"
   },
   "author": "Dan Ferguson",
   "license": "ISC",
-  "dependencies": {
-    "angular": "^1.7.9",
-    "angular-router-browserify": "0.0.2",
-    "body-parser": "^1.19.0",
-    "diskdb": "^0.1.17",
-    "express": "^4.17.1",
-    "node-ssdp": "^4.0.0",
-    "request": "^2.88.2",
-    "xml-writer": "^1.7.0"
+  "bugs": {
+    "url": "https://github.com/DEFENDORe/pseudotv/issues"
   },
-  "bin": "dist/index.js",
-  "pkg": {
-    "assets": [
-      "dist/web/public/**/*",
-      "dist/resources/**/*"
-    ],
-    "targets": [
-      "x86",
-      "x64",
-      "linux",
-      "macos",
-      "windows"
-    ]
+  "homepage": "https://github.com/DEFENDORe/pseudotv#readme",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
+    "core-js": "^2.6.5",
+    "express": "^4.17.1",
+    "sqlite3": "^4.2.0",
+    "vue": "^2.6.10",
+    "vue-router": "^3.1.6",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/preset-env": "^7.9.5",
-    "browserify": "^16.5.1",
-    "copyfiles": "^2.2.0",
-    "del-cli": "^3.0.0",
-    "nodemon": "^2.0.3",
-    "pkg": "^4.4.7",
-    "watchify": "^3.11.1"
+    "@vue/cli-plugin-babel": "^3.8.0",
+    "@vue/cli-plugin-eslint": "^3.8.0",
+    "@vue/cli-service": "^3.8.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "vue-template-compiler": "^2.6.10"
   },
-  "babel": {
-    "plugins": [
-      "@babel/plugin-proposal-class-properties"
-    ]
-  }
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions"
+  ]
 }
