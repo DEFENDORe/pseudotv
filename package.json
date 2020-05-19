@@ -1,59 +1,46 @@
 {
   "name": "pseudotv",
-  "version": "1.0.0",
-  "description": "Create LiveTV channels from your Plex media",
-  "main": "index.js",
+  "version": "0.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "build": "browserify ./web/app.js -o ./web/public/bundle.js",
-    "dev-client": "watchify ./web/app.js -o ./web/public/bundle.js",
-    "dev-server": "nodemon index.js --ignore ./web/ --ignore ./db/ --ignore ./xmltv.xml",
-    "compile": "babel index.js -d dist && babel src -d dist/src",
-    "package": "copyfiles ./web/public/**/* ./dist && copyfiles ./resources/**/* ./dist && pkg . --out-path bin",
-    "clean": "del-cli --force ./bin ./dist ./.pseudotv ./web/public/bundle.js"
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "test": "ng test",
+    "lint": "ng lint",
+    "e2e": "ng e2e"
   },
-  "author": "Dan Ferguson",
-  "license": "ISC",
+  "private": true,
   "dependencies": {
-    "angular": "^1.7.9",
-    "angular-router-browserify": "0.0.2",
-    "body-parser": "^1.19.0",
-    "diskdb": "^0.1.17",
-    "express": "^4.17.1",
-    "node-ssdp": "^4.0.0",
-    "request": "^2.88.2",
-    "xml-writer": "^1.7.0"
-  },
-  "bin": "dist/index.js",
-  "pkg": {
-    "assets": [
-      "dist/web/public/**/*",
-      "dist/resources/**/*"
-    ],
-    "targets": [
-      "x86",
-      "x64",
-      "linux",
-      "macos",
-      "windows"
-    ]
+    "@angular/animations": "~9.1.7",
+    "@angular/common": "~9.1.7",
+    "@angular/compiler": "~9.1.7",
+    "@angular/core": "~9.1.7",
+    "@angular/forms": "~9.1.7",
+    "@angular/platform-browser": "~9.1.7",
+    "@angular/platform-browser-dynamic": "~9.1.7",
+    "@angular/router": "~9.1.7",
+    "rxjs": "~6.5.4",
+    "tslib": "^1.10.0",
+    "zone.js": "~0.10.2"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.0",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/preset-env": "^7.9.5",
-    "browserify": "^16.5.1",
-    "copyfiles": "^2.2.0",
-    "del-cli": "^3.0.0",
-    "nodemon": "^2.0.3",
-    "pkg": "^4.4.7",
-    "watchify": "^3.11.1"
-  },
-  "babel": {
-    "plugins": [
-      "@babel/plugin-proposal-class-properties"
-    ]
+    "@angular-devkit/build-angular": "~0.901.6",
+    "@angular/cli": "~9.1.6",
+    "@angular/compiler-cli": "~9.1.7",
+    "@types/node": "^12.11.1",
+    "@types/jasmine": "~3.5.0",
+    "@types/jasminewd2": "~2.0.3",
+    "codelyzer": "^5.1.2",
+    "jasmine-core": "~3.5.0",
+    "jasmine-spec-reporter": "~4.2.1",
+    "karma": "~5.0.0",
+    "karma-chrome-launcher": "~3.1.0",
+    "karma-coverage-istanbul-reporter": "~2.1.0",
+    "karma-jasmine": "~3.0.1",
+    "karma-jasmine-html-reporter": "^1.4.2",
+    "protractor": "~5.4.3",
+    "ts-node": "~8.3.0",
+    "tslint": "~6.1.0",
+    "typescript": "~3.8.3"
   }
 }
