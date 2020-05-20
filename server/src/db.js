@@ -14,11 +14,75 @@ CREATE TABLE IF NOT EXISTS plex_accounts(
     token TEXT NOT NULL
 );`
 
+let createChannelSql = `
+CREATE TABLE IF NOT EXISTS channels(
+    id INTEGER PRIMARY KEY,
+    title TEXT NOT NULL,
+    rating TEXT NOT NULL,
+    icon TEXT DEFAULT 'https://raw.githubusercontent.com/DEFENDORe/pseudotv/master/resources/pseudotv.png',
+    number INTEGER NOT NULL
+);`
+
+let createProgramSql = `
+CREATE TABLE IF NOT EXISTS programs(
+    id INTEGER PRIMARY KEY,
+    showTitle TEXT NOT NULL,
+    episodeTitle TEXT NOT NULL,
+    season INTEGER NOT NULL,
+    episode INTEGER NOT NULL,
+    summary TEXT NOT NULL,
+    rating TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    channel INTEGER NOT NULL
+);`
+
+let createChannelOptsSql = `
+CREATE TABLE IF NOT EXISTS channelOpts(
+    id INTEGER PRIMARY KEY,
+    overlay INTEGER DEFAULT 0,
+    overlayPos INTEGER DEFAULT 0,
+    overlayWidth INTEGER DEFAULT 120,
+    overlayDuration INTEGER DEFAULT 60
+    commercials INTEGER DEFAULT 0
+);`
+
+let createProgramOptsSQL = `
+CREATE TABLE IF NOT EXISTS programOpts(
+    id INTEGER PRIMARY KEY,
+    audioTrack INTEGER NOT NULL,
+    videoTrack INTEGER NOT NULL,
+    SubtitleTrack INTEGER NOT NULL,
+    program INTEGER NOT NULL
+);`
+
 db.run(createPlexAccountsSql, [], (err) => {
     if (err)
         return console.error(err.message)
     console.log('Created plex_accounts Table.')
 })
+
+db.run(createChannelSql, [], (err) => {
+    if (err)
+        return console.error(err.message)
+    console.log('Created channels Table.')
+})
+
+db.run(createProgramSql, [], (err) => {
+    if (err)
+        return console.error(err.message)
+    console.log('Created programs Table.')
+})
+
+function getPrograms(channel) {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT * FROM programs WHERE channel = ?`
+        db.all(sql, [channel], (err, rows) => {
+            if (err)
+                reject(err)
+            resolve(rows)
+        })
+    })
+}
 
 function getPlexAccount(id) {
     return new Promise((resolve, reject) => {
