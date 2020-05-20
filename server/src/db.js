@@ -20,39 +20,52 @@ CREATE TABLE IF NOT EXISTS channels(
     title TEXT NOT NULL,
     rating TEXT NOT NULL,
     icon TEXT DEFAULT 'https://raw.githubusercontent.com/DEFENDORe/pseudotv/master/resources/pseudotv.png',
-    number INTEGER NOT NULL
+    channelNumber INTEGER NOT NULL
 );`
 
 let createProgramSql = `
 CREATE TABLE IF NOT EXISTS programs(
     id INTEGER PRIMARY KEY,
+    file TEXT NOT NULL,
+    length INTEGER NOT NULL,
     showTitle TEXT NOT NULL,
     episodeTitle TEXT NOT NULL,
     season INTEGER NOT NULL,
     episode INTEGER NOT NULL,
     summary TEXT NOT NULL,
     rating TEXT NOT NULL,
-    icon TEXT NOT NULL,
+    thumbnail TEXT NOT NULL,
     channel INTEGER NOT NULL
 );`
 
 let createChannelOptsSql = `
 CREATE TABLE IF NOT EXISTS channelOpts(
     id INTEGER PRIMARY KEY,
-    overlay INTEGER DEFAULT 0,
-    overlayPos INTEGER DEFAULT 0,
-    overlayWidth INTEGER DEFAULT 120,
-    overlayDuration INTEGER DEFAULT 60
-    commercials INTEGER DEFAULT 0
+    overlay BOOLEAN NOT NULL CHECK (overlay IN (0,1)) DEFAULT 0,
+    overlayPos INTEGER NOT NULL DEFAULT 0,
+    overlayWidth INTEGE NOT NULLR DEFAULT 120,
+    overlayDuration INTEGER NOT NULL DEFAULT 60,
+    commercials BOOLEAN NOT NULL CHECK (commercials IN (0,1)) DEFAULT 0,
+    shuffle BOOLEAN NOT NULL CHECK (shuffle IN (0,1)) DEFAULT 0,
+    commercialBreaks INTEGER NOT NULL DEFAULT 0
 );`
 
 let createProgramOptsSQL = `
 CREATE TABLE IF NOT EXISTS programOpts(
     id INTEGER PRIMARY KEY,
+    program INTEGER NOT NULL,
     audioTrack INTEGER NOT NULL,
     videoTrack INTEGER NOT NULL,
-    SubtitleTrack INTEGER NOT NULL,
-    program INTEGER NOT NULL
+    SubtitleTrack INTEGER NOT NULL
+);`
+
+let createCommercialsSQL = `
+CREATE TABLE IF NOT EXISTS commercials(
+    id INTEGER PRIMARY KEY,
+    file TEXT NOT NULL,
+    length INTEGER NOT NULL,
+    commercialTitle TEXT NOT NULL,
+    channel INTEGER NOT NULL,
 );`
 
 db.run(createPlexAccountsSql, [], (err) => {
@@ -71,6 +84,12 @@ db.run(createProgramSql, [], (err) => {
     if (err)
         return console.error(err.message)
     console.log('Created programs Table.')
+})
+
+db.run(createChannelOptsSql, [], (err) => {
+    if (err)
+        return console.error(err.message)
+    console.log('Created channel options Table.')
 })
 
 function getPrograms(channel) {
