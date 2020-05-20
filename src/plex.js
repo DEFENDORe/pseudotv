@@ -1,4 +1,6 @@
-import * as request from 'request';
+import request from 'request';
+import { Database } from './database.js';
+
 export class Plex {
     constructor(opts) {
         this._token = typeof opts.token !== 'undefined' ? opts.token : ''
@@ -7,16 +9,18 @@ export class Plex {
             port: typeof opts.port !== 'undefined' ? opts.port : '32400',
             protocol: typeof opts.protocol !== 'undefined' ? opts.protocol : 'http'
         }
+        this._clientIdentifier = 'rg14zekk3pa5zp4safjwaa8z';
         this._headers = {
             'Accept': 'application/json',
             'X-Plex-Device': 'PseudoTV',
             'X-Plex-Device-Name': 'PseudoTV',
             'X-Plex-Product': 'PseudoTV',
             'X-Plex-Version': '0.1',
-            'X-Plex-Client-Identifier': 'rg14zekk3pa5zp4safjwaa8z',
+            'X-Plex-Client-Identifier': this._clientIdentifier,
             'X-Plex-Platform': 'Chrome',
             'X-Plex-Platform-Version': '80.0'
         }
+        this.database = new Database('media-servers');
     }
 
     get URL() { return `${this._server.protocol}://${this._server.host}:${this._server.port}` }
@@ -137,5 +141,110 @@ export class Plex {
         for (var i = 0; i < dvrs.length; i++)
             for (var y = 0; y < dvrs[i].Device.length; y++)
                 this.Put(`/media/grabbers/devices/${dvrs[i].Device[y].key}/channelmap`, qs).then(() => { }, (err) => { console.log(err) })
+    }
+
+    async GetLibrary() {
+        const res = await this.Get('/library/sections')
+        var sections = []
+        for (let i = 0, l = typeof res.Directory !== 'undefined' ? res.Directory.length : 0; i < l; i++)
+            if (res.Directory[i].type === 'movie' || res.Directory[i].type === 'show')
+                sections.push({
+                    title: res.Directory[i].title,
+                    key: `/library/sections/${res.Directory[i].key}/all`,
+                    icon: `${server.protocol}://${server.host}:${server.port}${res.Directory[i].composite}?X-Plex-Token=${server.token}`,
+                    type: res.Directory[i].type
+                })
+        return sections
+    }
+
+    Login(option = { protocol: null, host: null, port: null }) {
+        return new Promise((resolve, reject) => {
+            const headers = {
+                'Accept': 'application/json',
+                'X-Plex-Product': 'PseudoTV',
+                'X-Plex-Version': 'Plex OAuth',
+                'X-Plex-Client-Identifier': this._clientIdentifier,
+                'X-Plex-Model': 'Plex OAuth'
+            }
+
+            this._server.protocol = option.protocol;
+            this._server.host = option.host;
+            this._server.port = option.port;
+
+            try {
+                request({
+                    method: 'POST',
+                    url: 'https://plex.tv/api/v2/pins?strong=true',
+                    headers
+                }, (err, res) => {
+                    if (err) {
+                        reject(`Plex 'Put' request failed. URL: https://plex.tv/api/v2/pins?strong=true`)
+                    } else {
+                        res.body = JSON.parse(res.body);
+                        resolve({
+                            'plexUrl': 
+                                `https://app.plex.tv/auth/#!?clientID=${this._clientIdentifier}&context[device][version]=${headers['X-Plex-Version']}&context[device][model]=${headers['X-Plex-Version']}&code=${res.body.code}&context[device][product]=Plex Web`
+                        });
+    
+                        this._Authentication(res.body.id).catch((error) => console.error(error));
+    
+                    }
+                });
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    _Authentication(responseId) {
+        const headers = {
+            'Accept': 'application/json',
+            'X-Plex-Product': 'PseudoTV',
+            'X-Plex-Version': 'Plex OAuth',
+            'X-Plex-Client-Identifier': this._clientIdentifier,
+            'X-Plex-Model': 'Plex OAuth'
+        }
+        let limit = 120000; // 2 minute time out limit
+        let poll = 2000; // check every 2 seconds for token
+
+        return new Promise((resolve, reject) => {
+            const authenticateInterval = setInterval(() => {
+                request({
+                    method: 'GET',
+                    url: `https://plex.tv/api/v2/pins/${responseId}`,
+                    headers
+                }, async (err, res) => {
+                    res.body = JSON.parse(res.body);
+                    if (err) {
+                        clearImmediate(authenticateInterval);
+                        reject(err);
+                    } else {
+                        limit -= poll;
+                        if (limit <= 0) {
+                            clearImmediate(authenticateInterval);
+                            reject('Timed Out. Failed to sign in a timely manner (2 mins)');
+                        }
+                        if (res.body.authToken !== null) {
+                            clearImmediate(authenticateInterval);
+                            this._token = res.body.authToken;
+                            try { 
+                                const _res = await this.Get('/');
+                                this.database.save({
+                                    name: _res.friendlyName,
+                                    token: this._token,
+                                    ...res.body
+                                });
+                                resolve(res);
+                            } catch (err) {
+                                reject(err);
+                            }
+                        }
+                        console.log('Waiting plex.tv authToken');
+                    }
+                });
+            }, poll);
+        });
+
+
     }
 }

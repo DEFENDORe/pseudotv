@@ -1,22 +1,48 @@
 import { Plex } from './plex.js';
 
 export class Driver {
-    constructor(){}
+    constructor(){
+        this.plex = new Plex({});
+    }
 
-    getLibrary(option) {
-        try {
-            if(option) {
+    
+    login(option = { service: null, host: null }) {
+        return new Promise(async (resolve, reject) => {
+            try {
                 switch(option.service) {
                     case 'plex':
+                        console.log(option);
+                        resolve(await this.plex.Login(option.host));
                         break;
                     default: 
-                        new Error('This service is not compatible')
+                        reject('This service is not compatible');
                 }
-            } else {
-                new Error('You need to set a service.')
+            } catch (error) {
+                reject(error.message);
             }
-        } catch (error) {
-            
-        }
+        });
+    }
+
+    /**
+     *
+     *
+     * @param {*} option {service: plex}
+     * @memberof Driver
+     */
+    getLibrary(option = { service: null }) {
+        return new Promise((resolve, reject) => {
+            try {
+                switch(option.service) {
+                    case 'plex':
+                        console.log(this.plex.GetLibrary());
+                        resolve('Ok');
+                        break;
+                    default: 
+                        reject('This service is not compatible');
+                }
+            } catch (error) {
+                reject(error.message);
+            }
+        });
     }
 }

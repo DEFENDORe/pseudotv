@@ -85,7 +85,7 @@ app.use('/images', express.static(path.join(process.env.DATABASE, 'images')))
 app.use(api(db, xmltvInterval))
 app.use(video(db))
 app.use(hdhr.router)
-app.use('/driver', driverRouter);
+app.use('/api/driver', driverRouter);
 app.listen(process.env.PORT, () => {
     console.log(`HTTP server running on port: http://*:${process.env.PORT}`)
     let hdhrSettings = db['hdhr-settings'].find()[0]
