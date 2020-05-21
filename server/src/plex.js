@@ -1,6 +1,7 @@
-const axios = require('axios')
-const xml2js = require('xml2js')
-class Plex {
+import axios from 'axios';
+import xml2js from 'xml2js';
+
+export class Plex {
     constructor(token) {
         this._headers = {
             'Accept': 'application/json',
@@ -104,5 +105,3 @@ class Plex {
         })
     }
 }
-
-module.exports = Plex

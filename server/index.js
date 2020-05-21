@@ -1,15 +1,17 @@
-const path = require('path')
-const express = require('express')
-const configExpressServer = require('./config')
+import path from 'path';
+import express from 'express';
+import configExpressServer from './config.js';
 
-process.env.PORT = typeof process.env.PORT === 'undefined' ? 8000 : process.env.PORT
+const __dirname = path.resolve(path.dirname(''));
 
-let app = express()
+process.env.PORT = typeof process.env.PORT === 'undefined' ? 8000 : process.env.PORT;
 
-configExpressServer(app)
+let app = express();
 
-app.use(express.static(path.join(__dirname, '../dist')))
+configExpressServer(app);
+
+app.use(express.static(path.join(__dirname, '../dist')));
 
 app.listen(process.env.PORT, () => {
-    console.log(`Server started on port: ${ process.env.PORT }`)
-})
+    console.log(`Server started on port: ${ process.env.PORT }`);
+});
