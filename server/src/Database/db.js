@@ -28,8 +28,53 @@ function createDatabaseTables() {
 
 function getPrograms(channel) {
     return new Promise((resolve, reject) => {
-        let sql = `SELECT * FROM programs WHERE channel = ?`
-        db.all(sql, [channel], (err, rows) => {
+        let sql = `SELECT * FROM programs WHERE channelId = ?`
+        db.all(sql, [channelId], (err, rows) => {
+            if (err)
+                reject(err)
+            resolve(rows)
+        })
+    })
+}
+
+function getProgramOpts(programId) {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT * FROM programOpts WHERE programId = ?`
+        db.all(sql, [programId], (err, rows) => {
+            if (err)
+                reject(err)
+            resolve(rows)
+        })
+    })
+}
+
+function getChannels() {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT * FROM channels
+                  ORDER BY id`
+        db.all(sql, [], (err, rows) => {
+            if (err)
+                reject(err)
+            resolve(rows)
+        })
+    })
+}
+
+function getChannelOpts(channelId) {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT * FROM channelOpts WHERE channel = ?`
+        db.all(sql, [channelId], (err, rows) => {
+            if (err)
+                reject(err)
+            resolve(rows)
+        })
+    })
+}
+
+function getCommercials(channelId) {
+    return new Promise((resolve, reject) => {
+        let sql = `SELECT * FROM commercials WHERE channelId = ?`
+        db.all(sql, [channelId], (err, rows) => {
             if (err)
                 reject(err)
             resolve(rows)

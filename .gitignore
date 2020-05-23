@@ -4,3 +4,4 @@ dist/
 pseudotv.db
 public/*
 !public/.gitkeep
+package-lock.json
