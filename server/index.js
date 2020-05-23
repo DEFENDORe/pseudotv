@@ -1,6 +1,7 @@
 import path from 'path';
 import express from 'express';
 import configExpressServer from './config.js';
+import console from 'console';
 
 const __dirname = path.resolve(path.dirname(''));
 

@@ -4,6 +4,7 @@
   "description": "Create live TV streams from own media.",
   "main": "server/index.js",
   "scripts": {
+    "prestart": "npm install",
     "start": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
@@ -18,13 +19,11 @@
     "url": "https://github.com/DEFENDORe/pseudotv/issues"
   },
   "homepage": "https://github.com/DEFENDORe/pseudotv#readme",
-  "script": {
-    "start": "vue-cli-service serve"
-  },
   "dependencies": {
     "axios": "^0.19.2",
     "vue": "^2.6.10",
-    "vue-router": "^3.1.6"
+    "vue-router": "^3.1.6",
+    "xml2js": "^0.4.23"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.8.0",

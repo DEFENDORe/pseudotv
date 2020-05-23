@@ -1,11 +1,14 @@
 import bodyParser from 'body-parser';
 import mediaServiceRouters from './src/router/mediaServiceRouters.js';
 
-import proxy from 'express-http-proxy';
+import HPM from 'http-proxy-middleware';
 
 function createProxyToClient(env) {
     if(env.ENVIRONMENT === 'development') {
-        return proxy('http://localhost:8080/');
+        const excludeAPI = (pathname) => {
+            return !pathname.match('^/api');
+        };
+        return HPM.createProxyMiddleware(excludeAPI, {target: 'http://localhost:8080/', ws: true});
     }
     return false;
 }
