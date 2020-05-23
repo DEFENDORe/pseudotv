@@ -3,18 +3,11 @@
   "version": "0.0.6",
   "description": "Create live TV streams from own media.",
   "main": "server/index.js",
-  "engines": {
-    "node": ">=13.14.0",
-    "npm": ">=6.13.7"
-  },
   "scripts": {
-    "serve": "npm start --prefix ./web & nodemon ./server",
+    "start": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
-    "start": "nodemon ./server/index.js",
-    "wb:start": "babel-node --experimental-json-modules tools/server.js"
+    "lint": "vue-cli-service lint"
   },
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DEFENDORe/pseudotv.git"
@@ -25,34 +18,21 @@
     "url": "https://github.com/DEFENDORe/pseudotv/issues"
   },
   "homepage": "https://github.com/DEFENDORe/pseudotv#readme",
+  "script": {
+    "start": "vue-cli-service serve"
+  },
   "dependencies": {
     "axios": "^0.19.2",
-    "body-parser": "^1.19.0",
-    "core-js": "^2.6.5",
-    "express": "^4.17.1",
-    "express-http-proxy": "^1.6.0",
-    "sqlite3": "^4.2.0",
     "vue": "^2.6.10",
-    "vue-router": "^3.1.6",
-    "xml2js": "^0.4.23"
+    "vue-router": "^3.1.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.6",
-    "@babel/node": "^7.8.7",
-    "@babel/preset-env": "^7.9.6",
     "@vue/cli-plugin-babel": "^3.8.0",
     "@vue/cli-plugin-eslint": "^3.8.0",
     "@vue/cli-service": "^3.8.0",
-    "babel-eslint": "^10.0.1",
-    "babel-loader": "^8.1.0",
-    "babel-node": "0.0.1-security",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
-    "nodemon": "^2.0.4",
-    "vue-template-compiler": "^2.6.10",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11",
-    "webpack-node-externals": "^1.7.2"
+    "vue-template-compiler": "^2.6.10"
   },
   "eslintConfig": {
     "root": true,
