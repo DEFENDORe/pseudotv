@@ -32,7 +32,7 @@ Now access [http://localhost:8000/api](http://localhost:8000/api) on port **8000
 
 ## API and WebUI on same time
 
-On an terminal, run `npm run serve:web` and in another terminal window run `npm run serve:api`
+Just run `npm start`
 
 Now access [http://localhost:8000](http://localhost:8000) on port **8000**.
 

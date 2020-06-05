@@ -8,6 +8,7 @@
     "npm": ">=6.13.7"
   },
   "scripts": {
+    "start": "concurrently -c \"yellow.bold,green.bold\" -n \"SERVER,CLIENT\" \"nodemon\" \"cd web && npm start\"",
     "serve:api": "nodemon ./server",
     "serve:web": "npm start --prefix ./web",
     "build:web": "npm run build --prefix ./web"
@@ -42,7 +43,8 @@
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
     "execa": "^4.0.2",
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.4",
+    "concurrently": "^5.2.0"
   },
   "eslintConfig": {
     "root": true,
