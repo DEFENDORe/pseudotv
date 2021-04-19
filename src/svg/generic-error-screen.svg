@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1920"
+   height="1080"
+   viewBox="0 0 507.99999 285.75001"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   sodipodi:docname="generic-error-screen.svg"
+   inkscape:export-filename="/home/vx/dev/pseudotv/resources/generic-error-screen.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.43386034"
+     inkscape:cx="1055.6646"
+     inkscape:cy="492.08878"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1056"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     units="px" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-11.249983)">
+    <rect
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:3.20000029;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect836"
+       width="508"
+       height="285.75"
+       x="0"
+       y="11.24997" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11.11943626px;line-height:125%;font-family:Sans;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458335px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="81.721901"
+       y="199.92511"
+       id="text1105"
+       transform="scale(1.0018233,0.99818001)"><tspan
+         sodipodi:role="line"
+         id="tspan1103"
+         x="81.721901"
+         y="199.92511"
+         style="font-size:20.75628471px;fill:#ffffff;stroke-width:0.26458335px">This stream is facing technical issues.</tspan><tspan
+         sodipodi:role="line"
+         x="81.721901"
+         y="213.8244"
+         style="font-size:20.75628471px;fill:#ffffff;stroke-width:0.26458335px"
+         id="tspan1109" /><tspan
+         sodipodi:role="line"
+         x="81.721901"
+         y="230.46899"
+         style="font-size:20.75628471px;fill:#ffffff;stroke-width:0.26458335px"
+         id="tspan1107">Try again later.</tspan></text>
+    <g
+       id="g6050"
+       transform="translate(0,-9.6343724)">
+      <rect
+         transform="rotate(0.52601418)"
+         y="85.000603"
+         x="214.56714"
+         height="73.832573"
+         width="32.814484"
+         id="rect4518"
+         style="opacity:1;fill:#9cbc28;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <rect
+         transform="rotate(1.4727575)"
+         style="opacity:1;fill:#289bbc;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         id="rect4520"
+         width="32.81448"
+         height="73.832573"
+         x="248.74632"
+         y="80.901688" />
+      <rect
+         transform="rotate(-3.2986121)"
+         y="103.78287"
+         x="269.35843"
+         height="73.832588"
+         width="32.814476"
+         id="rect4522"
+         style="opacity:1;fill:#bc289b;fill-opacity:1;stroke:#000000;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

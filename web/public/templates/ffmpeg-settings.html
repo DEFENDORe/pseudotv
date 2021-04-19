@@ -9,52 +9,190 @@
         </button>
     </h5>
     <h6>FFMPEG Executable Path (eg: C:\ffmpeg\bin\ffmpeg.exe || /usr/bin/ffmpeg)</h6>
-    <input type="text" class="form-control form-control-sm" ng-model="settings.ffmpegPath"/>
+    <input type="text" class="form-control form-control-sm" ria-describedby="ffmpegHelp" ng-model="settings.ffmpegPath"/>
+    <small id="ffmpegHelp" class="form-text text-muted">FFMPEG version 4.2+ required. Check by opening the version tab</small>
     <hr/>
     <h6>Miscellaneous Options</h6>
     <div class="row">
         <div class="col-sm-4">
-            <label>Threads</label>
-            <input type="number" class="form-control form-control-sm" ng-model="settings.threads" ng-change="createArgString()"/>
+            <div class="form-group">
+                <div class="form-group">
+                    <label>Threads</label>
+                    <input type="number" class="form-control form-control-sm" ng-model="settings.threads"/>
+                </div>
+            </div>
         </div>
         <div class="col-sm-4">
-            <label>Buffer Size (k)</label>
-            <input type="number" class="form-control form-control-sm" ng-model="settings.bufSize" ng-change="createArgString()"/>
+            <div class="form-group">
+                <label>Logging</label>
+                <br>
+                <input id="logFfmpeg" type="checkbox" ng-model="settings.logFfmpeg"/>
+                <label for="logFfmpeg">Log FFMPEG to console</label>
+            </div>
         </div>
-        <div class="col-sm-4">
-            <label>Log FFMPEG</label><br/>
-            <input id="logFfmpeg" type="checkbox" ng-model="settings.logFfmpeg"/> <label for="logFfmpeg">Log FFMPEG to console</label>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="form-group">
+                <label>Video Buffer</label>
+                <select ng-model="settings.concatMuxDelay" ria-describedby="concatMuxDelayHelp"
+                    ng-options="o.id as o.description for o in muxDelayOptions" />
+                <small id="concatMuxDelayHelp" class="form-text text-muted">Note: If you experience playback issues upon stream start, try increasing this.</small>
+            </div>
         </div>
     </div>
     <hr/>
+    <h6>Transcoding Features</h6>
     <div class="row">
-        <div class="col-sm-6">
-            <h6>Video Options</h6>
-            <label>Video Encoder</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.videoEncoder" ng-change="createArgString()"/>
+        <div class="col-sm-9">
+            <input id=enableFFMPEGTranscoding" type="checkbox" ng-model="settings.enableFFMPEGTranscoding"  />
+            <label for="enableFFMPEGTranscoding">Enable FFMPEG Transcoding</label>
+            <small class="form-text text-muted">Transcoding is required for some features like channel overlay and measures to prevent issues when switching episodes. The trade-off is quality loss and additional computing resource requirements.
+            </small>
+        </div>
+    </div>
+    <br />
+
+    <div class="form-group" ng-hide="isTranscodingNotNeeded()" >
+
+        <div class="row">
+            <div class="col-sm-9">
+                <label>Preferred Resolution</label>
+                <select ng-model="settings.targetResolution" ria-describedby="concatMuxDelayHelp" ng-options="o.id as o.description for o in resolutionOptions" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4">
+                <label>Video Encoder</label>
+                <input type="text" class="form-control form-control-sm" ng-model="settings.videoEncoder" ria-describedby="videoEncoderHelp"/>
+                <small id="videoEncoderHelp" class="form-text text-muted">Some possible values are:</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">h264 with Intel Quick Sync: h264_qsv</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">MPEG2 with Intel Quick Sync: mpeg2_qsv</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">NVIDIA: h264_nvenc</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">MPEG2: mpeg2video (default)</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">H264: libx264</small>
+                <small id="videoEncoderHelp" class="form-text text-muted">MacOS: h264_videotoolbox</small>
+            </div>
+            <div class="col-sm-1" />
+            <div class="col-sm-4">
+                <label>Audio Encoder</label>
+                <input type="text" class="form-control form-control-sm" ng-model="settings.audioEncoder" ria-describedby="audioEncoderHelp"/>
+                <small id="audioEncoderHelp" class="form-text text-muted">Some possible values are:</small>
+                <small id="audioEncoderHelp" class="form-text text-muted">aac</small>
+                <small id="audioEncoderHelp" class="form-text text-muted">ac3 (default), ac3_fixed</small>
+                <small id="audioEncoderHelp" class="form-text text-muted">flac</small>
+                <small id="audioEncoderHelp" class="form-text text-muted">libmp3lame</small>
+            </div>
+        </div>
+        <br />
+        <div class="form-group">
             <label>Video Bitrate (k)</label>
-            <input type="number" class="form-control form-control-sm" ng-model="settings.videoBitrate" ng-change="createArgString()"/>
-            <label>Video Resolution</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.videoResolution" ng-change="createArgString()"/>
-            <label>Video Framerate</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.videoFrameRate" ng-change="createArgString()"/>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.videoBitrate"/>
+            <br />
+            <label>Video Buffer Size (k)</label>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.videoBufSize"/>
+            <br />
+            <label>Max Frame Rate</label>
+            <select class='form-control custom-select'  ng-model="settings.maxFPS" ria-describedby="fpsHelp"
+            ng-options="o.id as o.description for o in fpsOptions" ></select>
+            <small id='fpsHelp' class='form-text text-muted'>Will transcode videos that have FPS higher than this.</small>
+
+            <br />
+            <label>Scaling Algorithm</label>
+            <select class='form-control custom-select'  ng-model="settings.scalingAlgorithm" ria-describedby="scalingHelp"
+            ng-options="o.id as o.description for o in scalingOptions" ></select>
+            <small id='scalingHelp' class='form-text text-muted'>Scaling algorithm to use when the transcoder needs to change the video size.</small>
+
         </div>
-        <div class="col-sm-6">
-            <h6>Audio Options</h6>
-            <label>Audio Encoder</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.audioEncoder" ng-change="createArgString()"/>
-            <label>Audio Channels</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.audioChannels" ng-change="createArgString()"/>
+
+        <div class="form-group">
             <label>Audio Bitrate (k)</label>
-            <input type="number" class="form-control form-control-sm" ng-model="settings.audioBitrate" ng-change="createArgString()"/>
-            <label>Audio Rate</label>
-            <input type="text" class="form-control form-control-sm" ng-model="settings.audioRate" ng-change="createArgString()"/>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.audioBitrate"/>
+            <br />
+            <label>Audio Buffer Size (k)</label>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.audioBufSize"/>
+            <br />
+            <label>Audio Volume (%)</label>
+            <input type="number" ria-describedby="volumeHelp" class="form-control form-control-sm" ng-model="settings.audioVolumePercent"/>
+            <small id="volumeHelp" class="form-text text-muted">Values higher than 100 will boost the audio.</small>
+            <br />
+            <label>Audio Channels</label>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.audioChannels"/>
+            <br />
+            <label>Audio Sample Rate (k)</label>
+            <input type="number" class="form-control form-control-sm" ng-model="settings.audioSampleRate"/>
         </div>
+
+
+        <div class="form-group">
+            <div>
+                <label>Error Screen:</label>
+                <select ng-model="settings.errorScreen" ria-describedby="errorHelp"
+                    ng-options="o.value as o.description for o in errorScreens" />
+                <label>Audio:</label>
+                <select ng-model="settings.errorAudio" ria-describedby="errorHelp"
+                    ng-options="o.value as o.description for o in errorAudios" />
+            </div>
+
+            <small id="errorHelp" class="form-text text-muted">If there are issues playing a video, dizqueTV will try to use an error screen as a placeholder while retrying loading the video every 60 seconds.</small>
+        </div>
+
+
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group">
+                    <input id="enableNormalizeResolution" type="checkbox" ng-model="settings.normalizeResolution" ng-disabled="isTranscodingNotNeeded()" />
+                    <label for="enableNormalizeResolution">Normalize Resolution</label>
+                    <small class="form-text text-muted">Some clients experience issues when the video stream changes resolution. This option will make dizqueTV convert all videos to the preferred resolution selected above. Otherwise, the preferred resolution will be used as a maximum resolution for transcoding.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <br />
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group row">
+                    <div class="col-sm-4">
+                        <input id="enableNormalizeVideoCodec" type="checkbox" ng-model="settings.normalizeVideoCodec" ng-disabled="isTranscodingNotNeeded()" />
+                        <label for="enableNormalizeVideoCodec">Normalize Video Codec</label>
+                    </div>
+                    <div class="col-sm-4">
+                        <input id="enableNormalizeAudioCodec" type="checkbox" ng-model="settings.normalizeAudioCodec" ng-disabled="isTranscodingNotNeeded()" />
+                        <label for="enableNormalizeAudioCodec">Normalize Audio Codec</label>
+                    </div>
+                </div>
+                <small class="form-text text-muted">Some clients experience issues when the stream's codecs change.  Enable these so that any videos with different codecs than the ones specified above are forcefully transcoded.
+                </small>
+            </div>
+        </div>
+
+        <br />
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group">
+                    <input id="enableAlignAudio" type="checkbox" ng-model="settings.normalizeAudio" ng-disabled="isTranscodingNotNeeded()" />
+                    <label for="enableAlignAudio">Normalize Audio</label>
+                    <small class="form-text text-muted">This will force the preferred number of audio channels and sample rate, in addition it will align the lengths of the audio and video channels. This will prevent audio-related episode transition issues in many clients. Audio will always be transcoded.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <br />
+        <div class="row">
+            <div class="col-sm-9">
+                <div class="form-group">
+                    <input id="disableOverlay" type="checkbox" ng-model="settings.disableChannelOverlay" ng-disabled="isTranscodingNotNeeded()" />
+                    <label for="disableOverlay">Disable Channel Watermark Globally</label>
+                    <small class="form-text text-muted">Toggling this option will disable channel watermarks regardless of channel settings.
+                    </small>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <hr/>
-    <div class="row">
-        <h6>Raw FFMPEG Arguments <small>Modifying options above will reset the raw arguments. Therefore edit these last...</small></h6>
-        <textarea class="form-control" style="height: 350px" ng-model="settings.args"></textarea>
-    </div>
-    <hr/>
+
+
+
 </div>
