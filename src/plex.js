@@ -1,17 +1,25 @@
 const request = require('request')
 class Plex {
     constructor(opts) {
-        this._token = typeof opts.token !== 'undefined' ? opts.token : ''
+        this._accessToken = typeof opts.accessToken !== 'undefined' ? opts.accessToken : ''
+        let uri = "http://127.0.0.1:32400";
+        if ( (typeof opts.uri) !== 'undefined' ) {
+            uri = opts.uri;
+            if (uri.endsWith("/")) {
+                uri = uri.slice(0, uri.length - 1);
+            }
+        }
         this._server = {
+            uri: uri,
             host: typeof opts.host !== 'undefined' ? opts.host : '127.0.0.1',
             port: typeof opts.port !== 'undefined' ? opts.port : '32400',
             protocol: typeof opts.protocol !== 'undefined' ? opts.protocol : 'http'
         }
         this._headers = {
             'Accept': 'application/json',
-            'X-Plex-Device': 'PseudoTV',
-            'X-Plex-Device-Name': 'PseudoTV',
-            'X-Plex-Product': 'PseudoTV',
+            'X-Plex-Device': 'dizqueTV',
+            'X-Plex-Device-Name': 'dizqueTV',
+            'X-Plex-Product': 'dizqueTV',
             'X-Plex-Version': '0.1',
             'X-Plex-Client-Identifier': 'rg14zekk3pa5zp4safjwaa8z',
             'X-Plex-Platform': 'Chrome',
@@ -19,7 +27,7 @@ class Plex {
         }
     }
 
-    get URL() { return `${this._server.protocol}://${this._server.host}:${this._server.port}` }
+    get URL() { return `${this._server.uri}` }
 
     SignIn(username, password) {
         return new Promise((resolve, reject) => {
@@ -41,34 +49,44 @@ class Plex {
                 if (err || res.statusCode !== 201)
                     reject("Plex 'SignIn' Error - Username/Email and Password is incorrect!.")
                 else {
-                    this._token = JSON.parse(body).user.authToken
-                    resolve({ token: this._token })
+                    this._accessToken = JSON.parse(body).user.authToken
+                    resolve({ accessToken: this._accessToken })
                 }
             })
         })
     }
-    Get(path, optionalHeaders = {}) {
-        var req = {
+
+    doRequest(req) {
+        return new Promise( (resolve, reject) => {
+            request( req, (err, res) => {
+                if (err) {
+                    reject(err);
+                } else if ((res.statusCode < 200) || (res.statusCode >= 300) ) {
+                    reject( Error(`Request returned status code ${res.statusCode}`) );
+                } else {
+                    resolve(res);
+                }
+            });
+        });
+    }
+
+    async Get(path, optionalHeaders = {}) {
+        let req = {
             method: 'get',
             url: `${this.URL}${path}`,
             headers: this._headers,
             jar: false
         }
         Object.assign(req, optionalHeaders)
-        req.headers['X-Plex-Token'] = this._token
-        return new Promise((resolve, reject) => {
-            if (this._token === '')
-                reject("No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.")
-            else
-                request(req, (err, res) => {
-                    if (err || res.statusCode !== 200)
-                        reject(`Plex 'Get' request failed. URL: ${this.URL}${path}`)
-                    else
-                        resolve(JSON.parse(res.body).MediaContainer)
-                })
-        })
+        req.headers['X-Plex-Token'] = this._accessToken
+        if (this._accessToken === '') {
+            throw Error("No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.");
+        } else {
+            let res = await this.doRequest(req);
+            return JSON.parse(res.body).MediaContainer;
+        }
     }
-    Put(path, query = {}, optionalHeaders = {}) {
+    async Put(path, query = {}, optionalHeaders = {}) {
         var req = {
             method: 'put',
             url: `${this.URL}${path}`,
@@ -77,9 +95,9 @@ class Plex {
             jar: false
         }
         Object.assign(req, optionalHeaders)
-        req.headers['X-Plex-Token'] = this._token
-        return new Promise((resolve, reject) => {
-            if (this._token === '')
+        req.headers['X-Plex-Token'] = this._accessToken
+        await new Promise((resolve, reject) => {
+            if (this._accessToken === '')
                 reject("No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.")
             else
                 request(req, (err, res) => {
@@ -99,9 +117,9 @@ class Plex {
             jar: false
         }
         Object.assign(req, optionalHeaders)
-        req.headers['X-Plex-Token'] = this._token
+        req.headers['X-Plex-Token'] = this._accessToken
         return new Promise((resolve, reject) => {
-            if (this._token === '')
+            if (this._accessToken === '')
                 reject("No Plex token provided. Please use the SignIn method or provide a X-Plex-Token in the Plex constructor.")
             else
                 request(req, (err, res) => {
@@ -112,31 +130,52 @@ class Plex {
                 })
         })
     }
+    async checkServerStatus() {
+        try {
+            await this.Get('/');
+            return 1;
+        } catch (err) {
+            console.error("Error getting Plex server status", err);
+            return -1;
+        }
+    }
     async GetDVRS() {
-        var result = await this.Get('/livetv/dvrs')
-        var dvrs = result.Dvr
-        dvrs = typeof dvrs === 'undefined' ? [] : dvrs
-        return dvrs
+        try {
+            var result = await this.Get('/livetv/dvrs')
+            var dvrs = result.Dvr
+            dvrs = typeof dvrs === 'undefined' ? [] : dvrs
+            return dvrs
+        } catch (err) {
+            throw Error( "GET /livetv/drs failed: " + err.message);
+        }
     }
     async RefreshGuide(_dvrs) {
-        var dvrs = typeof _dvrs !== 'undefined' ? _dvrs : await this.GetDVRS()
-        for (var i = 0; i < dvrs.length; i++)
-            this.Post(`/livetv/dvrs/${dvrs[i].key}/reloadGuide`).then(() => { }, (err) => { console.log(err) })
+        try {
+            var dvrs = typeof _dvrs !== 'undefined' ? _dvrs : await this.GetDVRS()
+            for (var i = 0; i < dvrs.length; i++) {
+                await this.Post(`/livetv/dvrs/${dvrs[i].key}/reloadGuide`);
+            }
+        } catch (err) {
+            throw Error("Zort", err);
+        }
     }
     async RefreshChannels(channels, _dvrs) {
         var dvrs = typeof _dvrs !== 'undefined' ? _dvrs : await this.GetDVRS()
         var _channels = []
         let qs = {}
-        for (var i = 0; i < channels.length; i++)
+        for (var i = 0; i < channels.length; i++) {
             _channels.push(channels[i].number)
+        }
         qs.channelsEnabled = _channels.join(',')
         for (var i = 0; i < _channels.length; i++) {
             qs[`channelMapping[${_channels[i]}]`] = _channels[i]
             qs[`channelMappingByKey[${_channels[i]}]`] = _channels[i]
         }
-        for (var i = 0; i < dvrs.length; i++)
-            for (var y = 0; y < dvrs[i].Device.length; y++)
-                this.Put(`/media/grabbers/devices/${dvrs[i].Device[y].key}/channelmap`, qs).then(() => { }, (err) => { console.log(err) })
+        for (var i = 0; i < dvrs.length; i++) {
+            for (var y = 0; y < dvrs[i].Device.length; y++) {
+                await this.Put(`/media/grabbers/devices/${dvrs[i].Device[y].key}/channelmap`, qs);
+            }
+        }
     }
 }
 

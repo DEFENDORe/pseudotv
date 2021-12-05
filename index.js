@@ -1,3 +1,4 @@
+
 const db = require('diskdb')
 const fs = require('fs')
 const path = require('path')
@@ -5,11 +6,29 @@ const express = require('express')
 const bodyParser = require('body-parser')
 
 const api = require('./src/api')
+const dbMigration = require('./src/database-migration');
 const video = require('./src/video')
 const HDHR = require('./src/hdhr')
 
 const xmltv = require('./src/xmltv')
-const Plex = require('./src/plex')
+const Plex = require('./src/plex');
+const channelCache = require('./src/channel-cache');
+const constants = require('./src/constants')
+const ChannelDB = require("./src/dao/channel-db");
+const FillerDB = require("./src/dao/filler-db");
+const TVGuideService = require("./src/tv-guide-service");
+const onShutdown = require("node-graceful-shutdown").onShutdown;
+
+console.log(
+`         \\
+   dizqueTV ${constants.VERSION_NAME}
+.------------.
+|:::///### o |
+|:::///###   |
+':::///### o |
+'------------'
+`);
+
 
 for (let i = 0, l = process.argv.length; i < l; i++) {
     if ((process.argv[i] === "-p" || process.argv[i] === "--port") && i + 1 !== l)
@@ -18,48 +37,105 @@ for (let i = 0, l = process.argv.length; i < l; i++) {
         process.env.DATABASE = process.argv[i + 1]
 }
 
-process.env.DATABASE = process.env.DATABASE || './.pseudotv'
+process.env.DATABASE = process.env.DATABASE || './.dizquetv'
 process.env.PORT = process.env.PORT || 8000
 
-if (!fs.existsSync(process.env.DATABASE))
+if (!fs.existsSync(process.env.DATABASE)) {
+    if (fs.existsSync("./.pseudotv")) {
+        throw Error(process.env.DATABASE + " folder not found but ./.pseudotv has been found. Please rename this folder or create an empty " + process.env.DATABASE + " folder so that the program is not confused about.");
+    }
     fs.mkdirSync(process.env.DATABASE)
+}
 
-if(!fs.existsSync(path.join(process.env.DATABASE, 'images')))
+if(!fs.existsSync(path.join(process.env.DATABASE, 'images'))) {
     fs.mkdirSync(path.join(process.env.DATABASE, 'images'))
+}
 
-db.connect(process.env.DATABASE, ['channels', 'plex-servers', 'ffmpeg-settings', 'xmltv-settings', 'hdhr-settings'])
+if(!fs.existsSync(path.join(process.env.DATABASE, 'channels'))) {
+    fs.mkdirSync(path.join(process.env.DATABASE, 'channels'))
+}
+if(!fs.existsSync(path.join(process.env.DATABASE, 'filler'))) {
+    fs.mkdirSync(path.join(process.env.DATABASE, 'filler'))
+}
 
-initDB(db)
+
+channelDB = new ChannelDB( path.join(process.env.DATABASE, 'channels') );
+fillerDB = new FillerDB( path.join(process.env.DATABASE, 'filler') , channelDB, channelCache );
+
+db.connect(process.env.DATABASE, ['channels', 'plex-servers', 'ffmpeg-settings', 'plex-settings', 'xmltv-settings', 'hdhr-settings', 'db-version', 'client-id'])
+
+initDB(db, channelDB)
+
+const guideService = new TVGuideService(xmltv, db);
+
+
 
 let xmltvInterval = {
     interval: null,
     lastRefresh: null,
-    updateXML: () => {
-        let channels = db['channels'].find()
-        channels.sort((a, b) => { return a.number < b.number ? -1 : 1 })
-        let xmltvSettings = db['xmltv-settings'].find()[0]
-        xmltv.WriteXMLTV(channels, xmltvSettings).then(async () => {    // Update XML
+    updateXML: async () => {
+        let getChannelsCached = async() => {
+            let channelNumbers = await channelDB.getAllChannelNumbers();
+            return await Promise.all( channelNumbers.map( async (x) => {
+                return (await channelCache.getChannelConfig(channelDB, x))[0];
+            }) );
+        }
+
+        let channels = [];
+
+        try {
+            channels = await getChannelsCached();
+            let xmltvSettings = db['xmltv-settings'].find()[0];
+            let t = guideService.prepareRefresh(channels, xmltvSettings.cache*60*60*1000);
+            channels = null;
+
+            await guideService.refresh(t);
             xmltvInterval.lastRefresh = new Date()
-            console.log('XMLTV Updated at ', xmltvInterval.lastRefresh.toLocaleString())
-            let plexServers = db['plex-servers'].find()
-            for (let i = 0, l = plexServers.length; i < l; i++) {       // Foreach plex server
-                var plex = new Plex(plexServers[i])
-                await plex.GetDVRS().then(async (dvrs) => {             // Refresh guide and channel mappings
-                    if (plexServers[i].arGuide)
-                        plex.RefreshGuide(dvrs).then(() => { }, (err) => { console.error(err, i) })
-                    if (plexServers[i].arChannels && channels.length !== 0)
-                        plex.RefreshChannels(channels, dvrs).then(() => { }, (err) => { console.error(err, i) })
-                })
+            console.log('XMLTV Updated at ', xmltvInterval.lastRefresh.toLocaleString());
+        } catch (err) {
+            console.error("Unable to update TV guide?", err);
+            return;
+        }
+        channels = await getChannelsCached();
+
+        let plexServers = db['plex-servers'].find()
+        for (let i = 0, l = plexServers.length; i < l; i++) {       // Foreach plex server
+            let plex = new Plex(plexServers[i])
+            let dvrs;
+            if ( !plexServers[i].arGuide && !plexServers[i].arChannels) {
+                continue;
             }
-        }, (err) => {
-            console.error("Failed to write the xmltv.xml file. Something went wrong. Check your output directory via the web UI and verify file permissions?", err)
-        })
+            try {
+                dvrs = await plex.GetDVRS() // Refresh guide and channel mappings
+            } catch(err) {
+                console.error(`Couldn't get DVRS list from ${plexServers[i].name}. This error will prevent 'refresh guide' or 'refresh channels' from working for this Plex server. But it is NOT related to playback issues.` , err );
+                continue;
+            }
+            if (plexServers[i].arGuide) {
+                try {
+                    await plex.RefreshGuide(dvrs);
+                } catch(err) {
+                    console.error(`Couldn't tell Plex ${plexServers[i].name} to refresh guide for some reason. This error will prevent 'refresh guide' from working for this Plex server. But it is NOT related to playback issues.` , err);
+                }
+            }
+            if (plexServers[i].arChannels && channels.length !== 0) {
+                try {
+                    await plex.RefreshChannels(channels, dvrs);
+                } catch(err) {
+                    console.error(`Couldn't tell Plex ${plexServers[i].name} to refresh channels for some reason. This error will prevent 'refresh channels' from working for this Plex server. But it is NOT related to playback issues.` , err);
+                }
+            }
+        }
     },
     startInterval: () => {
         let xmltvSettings = db['xmltv-settings'].find()[0]
         if (xmltvSettings.refresh !== 0) {
-            xmltvInterval.interval = setInterval(() => {
-                xmltvInterval.updateXML()
+            xmltvInterval.interval = setInterval( async () => {
+                try {
+                    await xmltvInterval.updateXML()
+                } catch(err) {
+                    console.error("update XMLTV error", err);
+                }
             }, xmltvSettings.refresh * 60 * 60 * 1000)
         }
     },
@@ -73,13 +149,35 @@ let xmltvInterval = {
 xmltvInterval.updateXML()
 xmltvInterval.startInterval()
 
-let hdhr = HDHR(db)
+let hdhr = HDHR(db, channelDB)
 let app = express()
 app.use(bodyParser.json({limit: '50mb'}))
+app.get('/version.js', (req, res) => {
+    res.writeHead(200, {
+        'Content-Type': 'application/javascript'
+    });
+
+    res.write( `
+        function setUIVersionNow() {
+            setTimeout( setUIVersionNow, 1000);
+            var element = document.getElementById("uiversion");
+            if (element != null) {
+                element.innerHTML = "${constants.VERSION_NAME}";
+            }
+        }
+        setTimeout( setUIVersionNow, 1000);
+    ` );
+    res.end();
+});
+app.use('/images', express.static(path.join(process.env.DATABASE, 'images')))
 app.use(express.static(path.join(__dirname, 'web/public')))
 app.use('/images', express.static(path.join(process.env.DATABASE, 'images')))
-app.use(api.router(db, xmltvInterval))
-app.use(video.router(db))
+app.use('/favicon.svg', express.static(
+    path.join(__dirname, 'resources/favicon.svg')
+) );
+
+app.use(api.router(db, channelDB, fillerDB, xmltvInterval, guideService ))
+app.use(video.router( channelDB, fillerDB, db))
 app.use(hdhr.router)
 app.listen(process.env.PORT, () => {
     console.log(`HTTP server running on port: http://*:${process.env.PORT}`)
@@ -88,74 +186,39 @@ app.listen(process.env.PORT, () => {
         hdhr.ssdp.start()
 })
 
-function initDB(db) {
-    let ffmpegSettings = db['ffmpeg-settings'].find()
+function initDB(db, channelDB) {
+    if (!fs.existsSync(process.env.DATABASE + '/images/dizquetv.png')) {
+        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/dizquetv.png')))
+        fs.writeFileSync(process.env.DATABASE + '/images/dizquetv.png', data)
+    }
+    dbMigration.initDB(db, channelDB, __dirname);
     if (!fs.existsSync(process.env.DATABASE + '/font.ttf')) {
         let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/font.ttf')))
         fs.writeFileSync(process.env.DATABASE + '/font.ttf', data)
     }
-    if (!fs.existsSync(process.env.DATABASE + '/images/pseudotv.png')) {
-        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/pseudotv.png')))
-        fs.writeFileSync(process.env.DATABASE + '/images/pseudotv.png', data)
+    if (!fs.existsSync(process.env.DATABASE + '/images/dizquetv.png')) {
+        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/dizquetv.png')))
+        fs.writeFileSync(process.env.DATABASE + '/images/dizquetv.png', data)
+    }
+    if (!fs.existsSync(process.env.DATABASE + '/images/generic-error-screen.png')) {
+        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/generic-error-screen.png')))
+        fs.writeFileSync(process.env.DATABASE + '/images/generic-error-screen.png', data)
+    }
+    if (!fs.existsSync(process.env.DATABASE + '/images/generic-offline-screen.png')) {
+        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/generic-offline-screen.png')))
+        fs.writeFileSync(process.env.DATABASE + '/images/generic-offline-screen.png', data)
+    }
+    if (!fs.existsSync(process.env.DATABASE + '/images/loading-screen.png')) {
+        let data = fs.readFileSync(path.resolve(path.join(__dirname, 'resources/loading-screen.png')))
+        fs.writeFileSync(process.env.DATABASE + '/images/loading-screen.png', data)
     }
 
-    if (ffmpegSettings.length === 0) {
-        db['ffmpeg-settings'].save({
-            ffmpegPath: '/usr/bin/ffmpeg',
-            offset: 0,
-            threads: 4,
-            videoEncoder: 'libx264',
-            videoResolution: '1280x720',
-            videoFrameRate: 30,
-            videoBitrate: 10000,
-            audioBitrate: 192,
-            audioChannels: 2,
-            audioRate: 48000,
-            bufSize: 1000,
-            audioEncoder: 'ac3',
-            logFfmpeg: false,
-            args: `-threads 4
--ss STARTTIME
--re
--i INPUTFILE
--t DURATION
--map VIDEOSTREAM
--map AUDIOSTREAM
--c:v libx264
--c:a ac3
--ac 2
--ar 48000
--b:a 192k
--b:v 10000k
--s 1280x720
--r 30
--flags cgop+ilme
--sc_threshold 1000000000
--minrate:v 10000k
--maxrate:v 10000k
--bufsize:v 1000k
--metadata service_provider="PseudoTV"
--metadata CHANNELNAME
--f mpegts
--output_ts_offset TSOFFSET
--muxdelay 0
--muxpreload 0
-OUTPUTFILE`
-        })
-    }
-    let xmltvSettings = db['xmltv-settings'].find()
-    if (xmltvSettings.length === 0) {
-        db['xmltv-settings'].save({
-            cache: 12,
-            refresh: 4,
-            file: `${process.env.DATABASE}/xmltv.xml`
-        })
-    }
-    let hdhrSettings = db['hdhr-settings'].find()
-    if (hdhrSettings.length === 0) {
-        db['hdhr-settings'].save({
-            tunerCount: 1,
-            autoDiscovery: true
-        })
-    }
 }
+
+onShutdown("log" , [],  async() => {
+    console.log("Received exit signal, attempting graceful shutdonw...");
+});
+onShutdown("xmltv-writer" , [],  async() => {
+    await xmltv.shutdown();
+} );
+

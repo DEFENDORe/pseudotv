@@ -1,13 +1,14 @@
-FROM node:12.16
-RUN apt-get -y update && \
-    apt-get -y upgrade && \
-    apt-get install -y ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+FROM node:12.18-alpine3.12
 WORKDIR /home/node/app
 COPY package*.json ./
-RUN npm install
+RUN npm install && npm install -g browserify nexe@3.3.7
+COPY --from=vexorian/dizquetv:nexecache /var/nexe/linux-x64-12.16.2 /var/nexe/
 COPY . .
-RUN npm install -g browserify
-RUN npm run build
+RUN npm run build && LINUXBUILD=dizquetv sh make_dist.sh linuxonly
+
+FROM jrottenberg/ffmpeg:4.2-ubuntu1804
 EXPOSE 8000
-CMD [ "npm", "start"]
+WORKDIR /home/node/app
+ENTRYPOINT [ "./dizquetv" ]
+COPY --from=0 /home/node/app/dist/dizquetv /home/node/app/
+RUN ln -s /usr/local/bin/ffmpeg /usr/bin/ffmpeg
